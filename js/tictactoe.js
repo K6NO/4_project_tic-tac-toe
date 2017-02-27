@@ -13,6 +13,7 @@ var ticTacToeModule = (function() {
     var playerNamesDisplay = document.getElementsByClassName('player-name');
     var player2Name = '';
     var player1Name = '';
+    var virtualBoxes = ["E","E","E","E","E","E","E","E","E"];
 
     var activePlayer = 1;
     var stepCounter = 0;
@@ -31,6 +32,7 @@ var ticTacToeModule = (function() {
 
         console.log(player1Name + ' , ' + player2Name);
     });
+
     newGameButton.addEventListener('click', function (e) {
         e.preventDefault();
         endScreen.style.display = 'none';
@@ -74,11 +76,13 @@ var ticTacToeModule = (function() {
                     stepCounter++;
                     if (activePlayer === 1) {
                         boxes[boxIndex].classList.add('box-filled-1');
+                        virtualBoxes[boxIndex] = 'O';
                         activePlayer = 2;
                         player1Box.classList.remove('active');
                         player2Box.classList.add('active');
                     } else {
                         boxes[boxIndex].classList.add('box-filled-2');
+                        virtualBoxes[boxIndex] = 'X';
                         activePlayer = 1;
                         player1Box.classList.add('active');
                         player2Box.classList.remove('active');
@@ -91,14 +95,20 @@ var ticTacToeModule = (function() {
                     var col3 = checkBoard(2, 9, 3);
                     var dia1 = checkBoard(0, 9, 4);
                     var dia2 = checkBoard(2, 9, 2);
-                    console.log("Row1:" + row1 + " Row2: " + row2 + " Row3: " + row3);
-                    console.log("Col1:" + col1 + " Col2: " + col2 + " Col3: " + col3);
-                    console.log("Dia1:" + dia1 + " Dia2: " + dia2);
+                    //console.log("Row1:" + row1 + " Row2: " + row2 + " Row3: " + row3);
+                    //console.log("Col1:" + col1 + " Col2: " + col2 + " Col3: " + col3);
+                    //console.log("Dia1:" + dia1 + " Dia2: " + dia2);
                     checkWin(row1, row2, row3, col1, col2, col3, dia1, dia2, stepCounter);
                 }
+                //var emptyBoxesArray = checkEmptyBoxes(virtualBoxes);
+                makeComputerMove(virtualBoxes);
+                console.log(virtualBoxes);
+
             }, false);
+
         })(i);
     }
+
 
     var checkBoard = function (start, end, jump) {
         var numberOfSigns = 0;
@@ -133,14 +143,30 @@ var ticTacToeModule = (function() {
             console.log("it's a tie");
         }
     }
+
+
+    var makeComputerMove = function(virtualBoxes){
+
+        //check empty boxes
+        var emptyBoxesArray = [];
+        for (let i=0; i<virtualBoxes.length; i++){
+            if(virtualBoxes[i] === 'E'){
+                emptyBoxesArray.push(i);
+            }
+        }
+
+        //determine move
+        var move = emptyBoxesArray[Math.floor(Math.random() * emptyBoxesArray.length)];
+        console.log(move);
+        return move;
+    }
+
 }());
 
-var score = function (game) {
-    if (game.win?(@player))
-    return 10
-    elsif game.win?(@opponent)
-    return -10
-    else
-    return 0
-}
+
+//machine player
+// 1. check for "E" indexes.
+// 2. check for
+// calculate minimax for all steps
+// 3.
 
