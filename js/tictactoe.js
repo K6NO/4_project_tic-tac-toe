@@ -10,17 +10,33 @@ var ticTacToeModule = (function() {
     var newGameButton = document.getElementById('new-game-button');
     var player1NameField = document.getElementById('player1-name');
     var player2NameField = document.getElementById('player2-name');
+    var computerCheckbox = document.getElementById('computer');
     var playerNamesDisplay = document.getElementsByClassName('player-name');
     var player2Name = '';
     var player1Name = '';
-    var virtualBoxes = ["E","E","E","E","E","E","E","E","E"];
+    var theBoard = ["E","E","E","E","E","E","E","E","E"];
+    var gameState = 'running';
+    var activeTurn = "human";
+    var choice;
 
     var activePlayer = 1;
-    var stepCounter = 0;
 
     boardScreen.style.display = 'none';
     endScreen.style.display = 'none';
 
+    computerCheckbox.addEventListener('change', function(){
+        if(computerCheckbox.checked){
+            player2NameField.disabled = true;
+            player2NameField.value = 'Computer';
+            player2Name = 'computer';
+        } else {
+            player2NameField.disabled = false;
+            player2NameField.value = '';
+            player2Name = '';
+        }
+    });
+
+    //TODO - consider deleting the event
     startButton.addEventListener('click', function (e) {
         e.preventDefault();
         startScreen.style.display = 'none';
@@ -33,6 +49,7 @@ var ticTacToeModule = (function() {
         console.log(player1Name + ' , ' + player2Name);
     });
 
+    //TODO - consider deleting the event
     newGameButton.addEventListener('click', function (e) {
         e.preventDefault();
         endScreen.style.display = 'none';
@@ -42,16 +59,18 @@ var ticTacToeModule = (function() {
         endScreen.classList.remove('screen-win-one');
         endScreen.classList.remove('screen-win-two');
         endScreen.classList.remove('screen-win-tie');
-        stepCounter = 0;
         activePlayer = 1;
         player2Name = '';
         player1Name = '';
         player1NameField.value = '';
         player2NameField.value = '';
+        computerCheckbox.checked = false;
+        player2NameField.disabled = false;
         for (var i = 0; i < boxes.length; i++) {
             boxes[i].classList.remove('box-filled-1');
             boxes[i].classList.remove('box-filled-2');
         }
+        theBoard = ["E","E","E","E","E","E","E","E","E"];
     })
 
     player1Box.classList.add('active');
@@ -68,105 +87,183 @@ var ticTacToeModule = (function() {
                     }
                 }
             }, false);
+
             boxes[i].addEventListener(('mouseout'), function () {
                 boxes[boxIndex].style.backgroundImage = '';
             }, false);
+
             boxes[i].addEventListener(('click'), function () {
-                if (!boxes[boxIndex].classList.contains('box-filled-1') && !boxes[boxIndex].classList.contains('box-filled-2')) {
-                    stepCounter++;
+                if (!isTerminal(theBoard) && !boxes[boxIndex].classList.contains('box-filled-1') && !boxes[boxIndex].classList.contains('box-filled-2')) {
                     if (activePlayer === 1) {
                         boxes[boxIndex].classList.add('box-filled-1');
-                        virtualBoxes[boxIndex] = 'O';
-                        activePlayer = 2;
-                        player1Box.classList.remove('active');
-                        player2Box.classList.add('active');
+                        theBoard[boxIndex] = 'O';
+                        if(computerCheckbox.checked) {
+                            activeTurn = 'computer';
+                            makeComputerMove(theBoard);
+                        } else {
+                            activePlayer = 2;
+                            player1Box.classList.remove('active');
+                            player2Box.classList.add('active');
+                        }
+
                     } else {
                         boxes[boxIndex].classList.add('box-filled-2');
-                        virtualBoxes[boxIndex] = 'X';
+                        theBoard[boxIndex] = 'X';
                         activePlayer = 1;
                         player1Box.classList.add('active');
                         player2Box.classList.remove('active');
                     }
-                    var row1 = checkBoard(0, 3, 1);
-                    var row2 = checkBoard(3, 6, 1);
-                    var row3 = checkBoard(6, 9, 1);
-                    var col1 = checkBoard(0, 7, 3);
-                    var col2 = checkBoard(1, 8, 3);
-                    var col3 = checkBoard(2, 9, 3);
-                    var dia1 = checkBoard(0, 9, 4);
-                    var dia2 = checkBoard(2, 9, 2);
-                    //console.log("Row1:" + row1 + " Row2: " + row2 + " Row3: " + row3);
-                    //console.log("Col1:" + col1 + " Col2: " + col2 + " Col3: " + col3);
-                    //console.log("Dia1:" + dia1 + " Dia2: " + dia2);
-                    checkWin(row1, row2, row3, col1, col2, col3, dia1, dia2, stepCounter);
+                    if(isTerminal(theBoard)) {
+                        boardScreen.style.display = 'none';
+                        endScreen.style.display = '';
+                        if(gameState === 'O-won'){
+                            endScreen.classList.add('screen-win-one');
+                            endGameMessage.innerText = 'Winner - ' + player1Name;
+                        } else if (gameState === 'X-won') {
+                            endScreen.classList.add('screen-win-two');
+                            endGameMessage.innerText = 'Winner - ' + player2Name;
+                        } else {
+                            endScreen.classList.add('screen-win-tie');
+                            endGameMessage.innerText = "It's a Tie!";
+                        }
+                    }
+
+                    console.log(theBoard);
                 }
-                //var emptyBoxesArray = checkEmptyBoxes(virtualBoxes);
-                makeComputerMove(virtualBoxes);
-                console.log(virtualBoxes);
-
             }, false);
-
         })(i);
     }
 
 
-    var checkBoard = function (start, end, jump) {
-        var numberOfSigns = 0;
-        for (var i = start; i < end; i += jump) {
-            if (boxes[i].classList.contains('box-filled-1')) {
-                numberOfSigns++;
-            } else if (boxes[i].classList.contains('box-filled-2')) {
-                numberOfSigns--;
+    var isTerminal = function (theBoard) {
+        //check rows
+        for(var i = 0; i <= 6; i+=3){
+            if (theBoard[i] !== "E" && theBoard[i] === theBoard[i+1] && theBoard[i+1] === theBoard[i+2]){
+                gameState = theBoard[i] + "-won"; // update the result of the game (not 'running')
+                console.log("Gamestate: " + gameState);
+                return true;
             }
         }
-        return numberOfSigns;
-    }
-
-    var checkWin = function (row1, row2, row3, col1, col2, col3, dia1, dia2, stepCounter) {
-        if (row1 === 3 || row2 === 3 || row3 === 3 || col1 === 3 || col2 === 3 || col3 === 3 || dia1 === 3 || dia2 === 3) {
-            boardScreen.style.display = 'none';
-            endScreen.classList.add('screen-win-one');
-            endGameMessage.innerText = 'Winner - ' + player1Name;
-            endScreen.style.display = '';
-            console.log('player1 wins');
-        } else if (row1 === -3 || row2 === -3 || row3 === -3 || col1 === -3 || col2 === -3 || col3 === -3 || dia1 === -3 || dia2 === -3) {
-            boardScreen.style.display = 'none';
-            endScreen.classList.add('screen-win-two');
-            endGameMessage.innerText = 'Winner - ' + player2Name;
-            endScreen.style.display = '';
-            console.log('player2 wins');
-        } else if (stepCounter === 9) {
-            boardScreen.style.display = 'none';
-            endScreen.classList.add('screen-win-tie');
-            endGameMessage.innerText = "It's a Tie!";
-            endScreen.style.display = '';
-            console.log("it's a tie");
+        //check columns
+        for(var i=0; i<3; i++){
+            if(theBoard[i] !== "E" && theBoard[i] === theBoard[i+3] && theBoard[i+3] === theBoard[i+6]){
+                gameState = theBoard[i] + "-won";
+                console.log("Gamestate: " + gameState);
+                return true;
+            }
         }
-    }
+        //check diagonals
+        for(var i= 0, j=4; i<=2; i+=2, j-=2){
+            if(theBoard[i] !== "E" && theBoard[i] === theBoard[i+j] && theBoard[i+j] === theBoard[i+j*2]){
+                gameState = theBoard[i] + "-won";
+                console.log("Gamestate: " + gameState);
+                return true;
+            }
+        }
+        //check if board is full --> see function above (pushes "E", returns and Array of "E"s
+        var emptyBoxesArray = checkEmptyBoxes(theBoard);
+        if(emptyBoxesArray.length == 0){
+            //no more empty cells, the game is a draw
+            gameState = 'draw';
+            console.log("Gamestate: " + gameState);
+            return true;
+        } else {
+            //game is still running
+            console.log("Game still running")
+            return false;
+        }
+    };
 
 
-    var makeComputerMove = function(virtualBoxes){
-
-        //check empty boxes
+    var checkEmptyBoxes = function (theBoard) {
         var emptyBoxesArray = [];
-        for (let i=0; i<virtualBoxes.length; i++){
-            if(virtualBoxes[i] === 'E'){
+        for (var i=0; i<theBoard.length; i++){
+            if(theBoard[i] === 'E'){
                 emptyBoxesArray.push(i);
             }
         }
+        return emptyBoxesArray;
+    }
 
-        //determine move
+    var makeComputerMove = function(){
+
+        //check empty boxes
+        var emptyBoxesArray = checkEmptyBoxes(theBoard);
+
+        //random move
         var move = emptyBoxesArray[Math.floor(Math.random() * emptyBoxesArray.length)];
+        //var resultMinimax = minimax(theBoard, 0);
+        //console.log("Minimax result: " + resultMinimax);
+        //var move = choice;
+        theBoard[move] = "X";
+        boxes[move].classList.add('box-filled-2');
+        //activeTurn = 'human';
+        //choice = [];
         console.log(move);
         return move;
     }
 
+    var score = function(theBoard, depth){
+            if(gameState === 'draw') return 0;
+            else if (gameState === 'O-won') return depth-10;
+            else if (gameState === 'X-won') return 10-depth;
+    }
+
+    var minimax = function (theBoard, depth) {
+        console.log("In minimax");
+        if (isTerminal(theBoard)){
+            return score(theBoard, depth);
+        }
+        depth +=1;
+        var scores = new Array();
+        var moves = new Array();
+        var availableMoves = checkEmptyBoxes(theBoard);
+        var move, possibleGame;
+        for (var i= 0; i<availableMoves.length; i++){
+            move = availableMoves[i];
+            possibleGame = getNewState(move, theBoard);
+            scores.push(minimax(possibleGame, depth));
+            moves.push(move);
+            theBoard = undoMove(theBoard, move);
+        }
+
+        var maxScore, maxScoreIndex, minScore, minScoreIndex;
+        if (activeTurn === 'computer') {
+            maxScore = Math.max.apply(Math, scores);
+            maxScoreIndex = scores.indexOf(maxScore);
+            choice = moves[maxScoreIndex];
+            return scores[maxScoreIndex];
+        }
+        else {
+            minScore = Math.min.apply(Math, scores);
+            minScoreIndex = scores.indexOf(minScore);
+            choice = moves[minScoreIndex];
+            return scores[minScoreIndex];
+        }
+    }
+
+    var getNewState = function(move, theBoard){
+        var piece = changeTurn();
+        theBoard[move] = piece;
+        return theBoard;
+    }
+
+    var undoMove = function(theBoard, move){
+        theBoard[move] = 'E';
+        return theBoard;
+    }
+
+    var changeTurn = function(){
+        var piece;
+        if(activeTurn === 'computer'){
+            piece = 'X';
+            activeTurn = 'human';
+        }
+        else {
+            piece = 'O';
+            activeTurn = 'computer';
+        }
+        return piece;
+
+    }
 }());
-
-
-//machine player
-// 1. check for "E" indexes.
-// 2. check for
-// calculate minimax for all steps
-// 3.
-
