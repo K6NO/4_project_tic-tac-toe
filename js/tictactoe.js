@@ -24,6 +24,9 @@ var ticTacToeModule = (function() {
     boardScreen.style.display = 'none';
     endScreen.style.display = 'none';
 
+    player1Box.classList.add('active');
+    player2Box.classList.remove('active');
+
     computerCheckbox.addEventListener('change', function(){
         if(computerCheckbox.checked){
             player2NameField.disabled = true;
@@ -36,9 +39,7 @@ var ticTacToeModule = (function() {
         }
     });
 
-    //TODO - consider deleting the event
-    startButton.addEventListener('click', function (e) {
-        e.preventDefault();
+    startButton.addEventListener('click', function () {
         if (player1NameField.value === '' || player2NameField === '' ){
             alert('Please enter the players name or choose computer opponent!')
         } else {
@@ -52,14 +53,12 @@ var ticTacToeModule = (function() {
         }
     });
 
-    //TODO - consider deleting the event
-    newGameButton.addEventListener('click', function (e) {
-        e.preventDefault();
+    newGameButton.addEventListener('click', function () {
         endScreen.style.display = 'none';
         startScreen.style.display = '';
         player1Box.classList.add('active');
         player2Box.classList.remove('active');
-        endScreen.classList.remove('screen-win-one');
+        endScreen.className.remove('screen-win-one');
         endScreen.classList.remove('screen-win-two');
         endScreen.classList.remove('screen-win-tie');
         activePlayer = 1;
@@ -74,10 +73,8 @@ var ticTacToeModule = (function() {
             boxes[i].classList.remove('box-filled-2');
         }
         theBoard = ["E","E","E","E","E","E","E","E","E"];
-    })
+    });
 
-    player1Box.classList.add('active');
-    player2Box.classList.remove('active');
 
     for (var i = 0; i < boxes.length; i++) {
         (function (boxIndex) {
@@ -160,7 +157,7 @@ var ticTacToeModule = (function() {
             return true;
         } else {
             //game is still running
-            console.log("Game still running")
+            console.log("Game still running");
             return false;
         }
     };
