@@ -19,14 +19,14 @@ var ticTacToeModule = (function() {
     var activeTurn = "human";
     var choice;
 
+    // Initial game setup
     var activePlayer = 1;
-
     boardScreen.style.display = 'none';
     endScreen.style.display = 'none';
-
     player1Box.classList.add('active');
     player2Box.classList.remove('active');
 
+    //start screen event handlers (play against computer checkbox)
     computerCheckbox.addEventListener('change', function(){
         if(computerCheckbox.checked){
             player2NameField.disabled = true;
@@ -39,6 +39,7 @@ var ticTacToeModule = (function() {
         }
     });
 
+    //(start button)
     startButton.addEventListener('click', function () {
         if (player1NameField.value === '' || player2NameField === '' ){
             alert('Please enter the players name or choose computer opponent!')
@@ -53,6 +54,7 @@ var ticTacToeModule = (function() {
         }
     });
 
+    //end screen event handler (new game button)
     newGameButton.addEventListener('click', function () {
         endScreen.style.display = 'none';
         startScreen.style.display = '';
@@ -76,6 +78,7 @@ var ticTacToeModule = (function() {
     });
 
 
+    // board boxes event handlers
     for (var i = 0; i < boxes.length; i++) {
         (function (boxIndex) {
             boxes[i].addEventListener('mouseover', function () {
@@ -93,11 +96,15 @@ var ticTacToeModule = (function() {
             }, false);
 
             boxes[i].addEventListener(('click'), function () {
+
+                //click event handler - check if state is not terminal and box is empty
                 if (!isTerminal(theBoard) && !boxes[boxIndex].classList.contains('box-filled-1') && !boxes[boxIndex].classList.contains('box-filled-2')) {
 
                     if (activePlayer === 1) {
                         boxes[boxIndex].classList.add('box-filled-1');
                         theBoard[boxIndex] = 'O';
+
+                        //make a computer move if the computer plays, otherwise switch players
                         if(computerCheckbox.checked && !isTerminal(theBoard)) {
                             activeTurn = 'computer';
                             makeComputerMove(theBoard);
@@ -114,21 +121,20 @@ var ticTacToeModule = (function() {
                         player1Box.classList.add('active');
                         player2Box.classList.remove('active');
                     }
+                    //check if terminal state has been reached, end game if necessary
                     checkGameOver(isTerminal(theBoard));
 
-                    console.log(theBoard);
                 }
             }, false);
         })(i);
     }
 
-
+    // function checking if terminal state is reached (X/O won or tie)
     var isTerminal = function (theBoard) {
         //check rows
         for(var i = 0; i <= 6; i+=3){
             if (theBoard[i] !== "E" && theBoard[i] === theBoard[i+1] && theBoard[i+1] === theBoard[i+2]){
                 gameState = theBoard[i] + "-won"; // update the result of the game (not 'running')
-                console.log("Gamestate: " + gameState);
                 return true;
             }
         }
@@ -136,7 +142,6 @@ var ticTacToeModule = (function() {
         for(var i=0; i<3; i++){
             if(theBoard[i] !== "E" && theBoard[i] === theBoard[i+3] && theBoard[i+3] === theBoard[i+6]){
                 gameState = theBoard[i] + "-won";
-                console.log("Gamestate: " + gameState);
                 return true;
             }
         }
@@ -144,16 +149,13 @@ var ticTacToeModule = (function() {
         for(var i= 0, j=4; i<=2; i+=2, j-=2){
             if(theBoard[i] !== "E" && theBoard[i] === theBoard[i+j] && theBoard[i+j] === theBoard[i+j*2]){
                 gameState = theBoard[i] + "-won";
-                console.log("Gamestate: " + gameState);
                 return true;
             }
         }
-        //check if board is full --> see function above (pushes "E", returns and Array of "E"s
+        //check if it's a tie
         var emptyBoxesArray = checkEmptyBoxes(theBoard);
         if(emptyBoxesArray.length == 0){
-            //no more empty cells, the game is a draw
             gameState = 'draw';
-            console.log("Gamestate: " + gameState);
             return true;
         } else {
             //game is still running
@@ -162,6 +164,7 @@ var ticTacToeModule = (function() {
         }
     };
 
+    //switch display if game is over
     var checkGameOver = function (isTerminal) {
         if (isTerminal) {
             boardScreen.style.display = 'none';
@@ -180,6 +183,7 @@ var ticTacToeModule = (function() {
     }
 
 
+    //helper function returning an array of indexes of empty boxes
     var checkEmptyBoxes = function (theBoard) {
         var emptyBoxesArray = [];
         for (var i=0; i<theBoard.length; i++){
@@ -190,6 +194,7 @@ var ticTacToeModule = (function() {
         return emptyBoxesArray;
     }
 
+    // function making a move for the computer - works with random move (commented), fails to work with minimax
     var makeComputerMove = function(){
 
         //check empty boxes
@@ -199,8 +204,8 @@ var ticTacToeModule = (function() {
         //var move = emptyBoxesArray[Math.floor(Math.random() * emptyBoxesArray.length)];
         //return move;
 
-        var resultMinimax = minimax(theBoard, 0);
-        console.log("Minimax result: " + resultMinimax);
+        //the minimax function stores the chosen index in the choice variable
+        minimax(theBoard, 0);
         var move = choice;
         theBoard[move] = "X";
         boxes[move].classList.add('box-filled-2');
@@ -209,6 +214,7 @@ var ticTacToeModule = (function() {
         console.log("Move: " + move);
     }
 
+    //scoring function
     var score = function(theBoard, depth){
         isTerminal(theBoard);
         if(gameState === 'draw')
@@ -219,11 +225,12 @@ var ticTacToeModule = (function() {
             return 10-depth;
     }
 
+    //minimax function
     var minimax = function (tempBoard, depth) {
         console.log("In minimax");
         if (isTerminal(tempBoard)){
             var scoreResult = score(tempBoard, depth);
-            console.log("Scoring result: " + scoreResult);
+            console.log("Terminal reached. Scoring: " + scoreResult);
             return scoreResult;
         }
         depth+=1;
@@ -255,17 +262,20 @@ var ticTacToeModule = (function() {
         }
     }
 
+    //helper function, creating a new state for the minimax function
     var getNewState = function(move, theBoard){
         var piece = changeTurn();
         theBoard[move] = piece;
         return theBoard;
     }
 
+    //helper function, undoing moves made by the getNewState function
     var undoMove = function(theBoard, move){
         theBoard[move] = 'E';
         return theBoard;
     }
 
+    //helper function, automatically switching between players when minimax is calculated
     var changeTurn = function(){
         var piece;
         if(activeTurn === 'computer'){
