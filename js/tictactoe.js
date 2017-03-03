@@ -39,14 +39,17 @@ var ticTacToeModule = (function() {
     //TODO - consider deleting the event
     startButton.addEventListener('click', function (e) {
         e.preventDefault();
-        startScreen.style.display = 'none';
-        boardScreen.style.display = '';
-        player1Name = player1NameField.value;
-        player2Name = player2NameField.value;
-        playerNamesDisplay[0].innerText = player1Name;
-        playerNamesDisplay[1].innerText = player2Name;
+        if (player1NameField.value === '' || player2NameField === '' ){
+            alert('Please enter the players name or choose computer opponent!')
+        } else {
+            startScreen.style.display = 'none';
+            boardScreen.style.display = '';
+            player1Name = player1NameField.value;
+            player2Name = player2NameField.value;
+            playerNamesDisplay[0].innerText = player1Name;
+            playerNamesDisplay[1].innerText = player2Name;
 
-        console.log(player1Name + ' , ' + player2Name);
+        }
     });
 
     //TODO - consider deleting the event
@@ -94,10 +97,11 @@ var ticTacToeModule = (function() {
 
             boxes[i].addEventListener(('click'), function () {
                 if (!isTerminal(theBoard) && !boxes[boxIndex].classList.contains('box-filled-1') && !boxes[boxIndex].classList.contains('box-filled-2')) {
+
                     if (activePlayer === 1) {
                         boxes[boxIndex].classList.add('box-filled-1');
                         theBoard[boxIndex] = 'O';
-                        if(computerCheckbox.checked) {
+                        if(computerCheckbox.checked && !isTerminal(theBoard)) {
                             activeTurn = 'computer';
                             makeComputerMove(theBoard);
                         } else {
@@ -113,20 +117,7 @@ var ticTacToeModule = (function() {
                         player1Box.classList.add('active');
                         player2Box.classList.remove('active');
                     }
-                    if(isTerminal(theBoard)) {
-                        boardScreen.style.display = 'none';
-                        endScreen.style.display = '';
-                        if(gameState === 'O-won'){
-                            endScreen.classList.add('screen-win-one');
-                            endGameMessage.innerText = 'Winner - ' + player1Name;
-                        } else if (gameState === 'X-won') {
-                            endScreen.classList.add('screen-win-two');
-                            endGameMessage.innerText = 'Winner - ' + player2Name;
-                        } else {
-                            endScreen.classList.add('screen-win-tie');
-                            endGameMessage.innerText = "It's a Tie!";
-                        }
-                    }
+                    checkGameOver(isTerminal(theBoard));
 
                     console.log(theBoard);
                 }
@@ -174,6 +165,23 @@ var ticTacToeModule = (function() {
         }
     };
 
+    var checkGameOver = function (isTerminal) {
+        if (isTerminal) {
+            boardScreen.style.display = 'none';
+            endScreen.style.display = '';
+            if (gameState === 'O-won') {
+                endScreen.classList.add('screen-win-one');
+                endGameMessage.innerText = 'Winner - ' + player1Name;
+            } else if (gameState === 'X-won') {
+                endScreen.classList.add('screen-win-two');
+                endGameMessage.innerText = 'Winner - ' + player2Name;
+            } else {
+                endScreen.classList.add('screen-win-tie');
+                endGameMessage.innerText = "It's a Tie!";
+            }
+        }
+    }
+
 
     var checkEmptyBoxes = function (theBoard) {
         var emptyBoxesArray = [];
@@ -188,43 +196,51 @@ var ticTacToeModule = (function() {
     var makeComputerMove = function(){
 
         //check empty boxes
-        var emptyBoxesArray = checkEmptyBoxes(theBoard);
+        //var emptyBoxesArray = checkEmptyBoxes(theBoard);
 
         //random move
-        var move = emptyBoxesArray[Math.floor(Math.random() * emptyBoxesArray.length)];
-        //var resultMinimax = minimax(theBoard, 0);
-        //console.log("Minimax result: " + resultMinimax);
-        //var move = choice;
+        //var move = emptyBoxesArray[Math.floor(Math.random() * emptyBoxesArray.length)];
+        //return move;
+
+        var resultMinimax = minimax(theBoard, 0);
+        console.log("Minimax result: " + resultMinimax);
+        var move = choice;
         theBoard[move] = "X";
         boxes[move].classList.add('box-filled-2');
-        //activeTurn = 'human';
-        //choice = [];
-        console.log(move);
-        return move;
+        activeTurn = 'human';
+        choice = [];
+        console.log("Move: " + move);
     }
 
     var score = function(theBoard, depth){
-            if(gameState === 'draw') return 0;
-            else if (gameState === 'O-won') return depth-10;
-            else if (gameState === 'X-won') return 10-depth;
+        isTerminal(theBoard);
+        if(gameState === 'draw')
+            return 0;
+        else if (gameState === 'O-won')
+            return depth-10;
+        else if (gameState === 'X-won')
+            return 10-depth;
     }
 
-    var minimax = function (theBoard, depth) {
+    var minimax = function (tempBoard, depth) {
         console.log("In minimax");
-        if (isTerminal(theBoard)){
-            return score(theBoard, depth);
+        if (isTerminal(tempBoard)){
+            var scoreResult = score(tempBoard, depth);
+            console.log("Scoring result: " + scoreResult);
+            return scoreResult;
         }
-        depth +=1;
+        depth+=1;
         var scores = new Array();
         var moves = new Array();
-        var availableMoves = checkEmptyBoxes(theBoard);
+        var availableMoves = checkEmptyBoxes(tempBoard);
+        console.log("Available moves: " + availableMoves);
         var move, possibleGame;
         for (var i= 0; i<availableMoves.length; i++){
             move = availableMoves[i];
-            possibleGame = getNewState(move, theBoard);
+            possibleGame = getNewState(move, tempBoard);
             scores.push(minimax(possibleGame, depth));
             moves.push(move);
-            theBoard = undoMove(theBoard, move);
+            tempBoard = undoMove(tempBoard, move);
         }
 
         var maxScore, maxScoreIndex, minScore, minScoreIndex;
